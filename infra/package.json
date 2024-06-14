@@ -1,0 +1,13 @@
+{
+    "name": "pulumi-coding-test",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18.19.34",
+        "typescript": "^5.4.5"
+    },
+    "dependencies": {
+        "@pulumi/aws": "^6.40.0",
+        "@pulumi/aws-native": "^0.108.3",
+        "@pulumi/pulumi": "^3.120.0"
+    }
+}

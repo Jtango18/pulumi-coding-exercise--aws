@@ -1,0 +1,7 @@
+name: pulumi-coding-test
+runtime: nodejs
+description: Solution to Pulumi - Cloud Support Coding Exercise
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-native-typescript
