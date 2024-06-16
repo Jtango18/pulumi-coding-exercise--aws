@@ -20,10 +20,5 @@
     <PackageReference Include="AWSSDK.S3" Version="3.7.305.28" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="events\events.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-    
+
 </Project>
