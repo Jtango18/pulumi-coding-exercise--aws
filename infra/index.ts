@@ -89,7 +89,7 @@ const dynamoAccessPolicy = new aws.iam.Policy("dynamo-access-policy", {
 const s3LambdaExecutionRole = new aws.iam.Role("lambda-execution-role", {
     assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal(aws.iam.Principals.LambdaPrincipal),
     path: "/",
-    name: "lambda-s3-access-role",
+    name: "lambda-execution-role",
     managedPolicyArns: [s3AccessPolicy.arn, dynamoAccessPolicy.arn],
     tags: getClassicDefaultTags()
 });
@@ -106,7 +106,12 @@ const s3IndexingLambda = new aws.lambda.Function("s3-indexing-lambda", {
     role: s3LambdaExecutionRole.arn,
     code: new pulumi.asset.FileArchive('./content/S3Processor.zip'),
     handler: "S3Processor::S3Processor.Function_FunctionHandler_Generated::FunctionHandler",
-
+    timeout: 120,
+    environment: {
+        variables: {
+            TABLE_NAME: uploadedObjectsTable.name, 
+        },
+    },
     architectures: [
         // TODO: We should handle whatever the host architecture is
         "arm64"
