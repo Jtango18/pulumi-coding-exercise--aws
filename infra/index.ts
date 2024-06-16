@@ -66,11 +66,18 @@ const lambdaBasicExecutionPolicyAttachment = new aws.iam.RolePolicyAttachment("l
 const s3IndexingLambda = new aws.lambda.Function("s3-indexing-lambda", {
     runtime: aws.lambda.Runtime.Dotnet8,
     role: s3LambdaExecutionRole.arn,
-    code: new pulumi.asset.FileArchive('PATH_TO_PACKAGE'),
-    handler: "ADD::HANDLER::HERE",
+    code: new pulumi.asset.FileArchive('./content/S3Processor.zip'),
+    handler: "S3Processor::S3Processor.Function_FunctionHandler_Generated::FunctionHandler",
+    
+    architectures: [
+        // TODO: We should handle whatever the host architecture is
+        "arm64"
+    ],
     tags: getClassicDefaultTags()
 
 });
+
+
 
 // Notification
 const s3Notification = new aws.s3.BucketNotification("s3-bucket", {
@@ -82,6 +89,6 @@ const s3Notification = new aws.s3.BucketNotification("s3-bucket", {
             // Add Filters here if required later
         }
     ]
-})
+}, {dependsOn: [s3IndexingLambda, uploadBucket]})
 
 
