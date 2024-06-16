@@ -1,1 +1,4 @@
 .env
+
+infra/content/*
+app/src/S3Processor/serverless.template
