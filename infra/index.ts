@@ -14,8 +14,8 @@ const getNativeDefaultTags = () => {
 }
 
 const getClassicDefaultTags = () => {
-   return  {
-        'toDelete' : 'true',
+    return {
+        'toDelete': 'true',
         'createdBy': 'pulumi'
     }
 }
@@ -47,12 +47,50 @@ const s3AccessPolicy = new aws.iam.Policy("s3-access-policy", {
     tags: getClassicDefaultTags()
 });
 
+// Dynamo Table
+const uploadedObjectsTable = new aws.dynamodb.Table("uploaded-objects-table", {
+    attributes: [
+        { name: "key", type: "S" },
+    ],
+    hashKey: "key",
+    billingMode: "PAY_PER_REQUEST",
+    tags: getClassicDefaultTags()
+});
+
+
+const dynamoAccessPolicyDocument = pulumi.all([uploadedObjectsTable.arn]).apply(([tableArn]) => {
+    return aws.iam.getPolicyDocument({
+        statements: [
+            {
+                effect: "Allow",
+                actions: [
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:GetItem",
+                    "dynamodb:Query",
+                    "dynamodb:Scan",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                ],
+                resources: [tableArn]
+            }
+        ]
+    })
+});
+
+
+const dynamoAccessPolicy = new aws.iam.Policy("dynamo-access-policy", {
+    policy: dynamoAccessPolicyDocument.apply(p => p.json),
+    name: "Dynamo-Access-Policy",
+    tags: getClassicDefaultTags()
+})
+
 // Execution Role
 const s3LambdaExecutionRole = new aws.iam.Role("lambda-execution-role", {
     assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal(aws.iam.Principals.LambdaPrincipal),
     path: "/",
     name: "lambda-s3-access-role",
-    managedPolicyArns: [s3AccessPolicy.arn],
+    managedPolicyArns: [s3AccessPolicy.arn, dynamoAccessPolicy.arn],
     tags: getClassicDefaultTags()
 });
 
@@ -68,7 +106,7 @@ const s3IndexingLambda = new aws.lambda.Function("s3-indexing-lambda", {
     role: s3LambdaExecutionRole.arn,
     code: new pulumi.asset.FileArchive('./content/S3Processor.zip'),
     handler: "S3Processor::S3Processor.Function_FunctionHandler_Generated::FunctionHandler",
-    
+
     architectures: [
         // TODO: We should handle whatever the host architecture is
         "arm64"
@@ -76,7 +114,6 @@ const s3IndexingLambda = new aws.lambda.Function("s3-indexing-lambda", {
     tags: getClassicDefaultTags()
 
 });
-
 
 
 // Notification
@@ -89,6 +126,6 @@ const s3Notification = new aws.s3.BucketNotification("s3-bucket", {
             // Add Filters here if required later
         }
     ]
-}, {dependsOn: [s3IndexingLambda, uploadBucket]})
+}, { dependsOn: [s3IndexingLambda, uploadBucket] })
 
 
